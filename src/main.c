@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "sqlite3.h"
+#include <windows.h>
 
 typedef struct {
     char name[50];
@@ -24,7 +26,6 @@ int count = 0;
 
 Theatre one, two, three, four, five;
 
-
 void PrintMenu()
 {
     printf("\033[1;36m");
@@ -43,6 +44,24 @@ void PrintMenu()
     printf("   ╚════════════════════════════════════════════════════════════╝\n");
     printf("   > ");
     printf("\033[0m");
+}
+
+sqlite3 *db;
+
+void init_db() {
+    char db_path[MAX_PATH];
+    GetCurrentDirectory(MAX_PATH, db_path);
+    strcat(db_path, "\\movie_booking.db");
+
+    int rc = sqlite3_open(db_path, &db);
+    if (rc) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        exit(0);
+    }
+}
+
+void close_db() {
+    sqlite3_close(db);
 }
 
 void InputDetails()
@@ -573,70 +592,34 @@ void GenerateBill()
     printf("\033[0m");
 }
 
-int main()
-{
-    one.movie_name = malloc(strlen("Dune 2") + 1);
-    strcpy(one.movie_name, "Dune 2");
-    two.movie_name = malloc(strlen("Transformers One") + 1);
-    strcpy(two.movie_name, "Transformers One");
-    three.movie_name = malloc(strlen("Oppenheimer") + 1);
-    strcpy(three.movie_name, "Oppenheimer");
-    four.movie_name = malloc(strlen("Inception") + 1);
-    strcpy(four.movie_name, "Inception");
-    five.movie_name = malloc(strlen("Tenet") + 1);
-    strcpy(five.movie_name, "Tenet");
+int main() {
+    init_db();
+    int choice;
+    do {
+        PrintMenu();
+        scanf("%d", &choice);
 
-    char *empty_seat = "[ ]";
-    char *booked_seat = "[X]";
-
-    for (int i = 0; i < 10; i++)
-    {
-        for (int j = 0; j < 15; j++)
-        {
-            strcpy(one.seats[i][j], empty_seat);
-            strcpy(two.seats[i][j], empty_seat);
-            strcpy(three.seats[i][j], empty_seat);
-            strcpy(four.seats[i][j], empty_seat);
-            strcpy(five.seats[i][j], empty_seat);
+        switch (choice) {
+            case 1:
+                InputDetails();
+                break;
+            case 2:
+                ShowDetails();
+                break;
+            case 3:
+                Book();
+                break;
+            case 4:
+                GenerateBill();
+                break;
+            case 5:
+                printf("Exiting...\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
         }
-    }
+    } while (choice != 5);
 
-    dynamic_array = malloc(sizeof(Details));
-       if (dynamic_array == NULL)
-       {
-           printf("Memory allocation failed!\n");
-       }
-
-       int flag = 0;
-       while (flag != 1)
-       {
-           PrintMenu();
-           int n;
-           scanf("%d", &n);
-           switch (n)
-           {
-           case 1:
-               InputDetails();
-               break;
-           case 2:
-               ShowDetails();
-               break;
-           case 3:
-               Book();
-               break;
-           case 4:
-               GenerateBill();
-               break;
-           case 5:
-               flag = 1;
-               break;
-           default:
-               printf("Invalid entry!!!\n");
-               break;
-           }
-       }
-
-       free(dynamic_array);
-       return 0;
-
+    close_db();
+    return 0;
 }

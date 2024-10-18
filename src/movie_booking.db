@@ -1,0 +1,29 @@
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    mobile TEXT NOT NULL
+);
+
+CREATE TABLE movies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    seats TEXT NOT NULL
+);
+
+CREATE TABLE bookings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    movie_id INTEGER,
+    row CHAR(1),
+    col INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (movie_id) REFERENCES movies(id)
+);
+
+INSERT INTO movies (name, seats) VALUES 
+('Dune 2', ''),
+('Transformers One', ''),
+('Oppenheimer', ''),
+('Inception', ''),
+('Tenet', '');
