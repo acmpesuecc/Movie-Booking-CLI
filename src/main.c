@@ -3,27 +3,27 @@
 #include <string.h>
 #include <time.h>
 
-typedef struct {
+typedef struct
+{
     char name[50];
     char email[50];
     char mobile[10];
-    char *row;
+    char row;
     int col;
     char movie_selected[50];
 } Details;
 
-typedef struct{
+typedef struct
+{
     char *movie_name;
     char seats[10][15][4];
 } Theatre;
 
 Theatre *list = NULL;
-
 Details *dynamic_array = NULL;
 int count = 0;
 
 Theatre one, two, three, four, five;
-
 
 void PrintMenu()
 {
@@ -58,12 +58,23 @@ void InputDetails()
     printf("   >>> Enter your name: ");
     scanf(" %[^\n]", dynamic_array[count].name);
     getchar();
-    printf("   >>> Enter your email address:");
+    printf("   >>> Enter your email address: ");
     scanf("%s", dynamic_array[count].email);
     getchar();
     printf("   >>> Enter mobile number: ");
     scanf("%s", dynamic_array[count].mobile);
     getchar();
+
+    FILE *file = fopen("data.csv", "a");
+    if (!file)
+    {
+        printf("Could not open file data.csv for writing.\n");
+        return;
+    }
+
+    // Write user details to the CSV with placeholders for movie selection and seat information
+    fprintf(file, "%s,%s,%s,%s,%c,%d\n", dynamic_array[count].name, dynamic_array[count].email, dynamic_array[count].mobile, "None", '-', 0);
+    fclose(file);
 
     count++;
 }
@@ -73,470 +84,193 @@ void ShowDetails()
     printf("   >>> Enter first or last name: ");
     char search[50];
     scanf("%s", search);
-    for (int i = 0; i < count; i++) {
-        if (strstr(dynamic_array[i].name, search) != NULL) {
-            printf("   Name: %s\n   Mobile: %s\n   Email: %s\n", dynamic_array[i].name, dynamic_array[i].mobile, dynamic_array[i].email);
+    int found = 0;
+    for (int i = 0; i < count; i++)
+    {
+        if (strstr(dynamic_array[i].name, search) != NULL)
+        {
+            printf("   Name: %s\n   Mobile: %s\n   Email: %s\n   Movie: %s\n   Seat: %c-%d\n",
+                   dynamic_array[i].name, dynamic_array[i].mobile, dynamic_array[i].email,
+                   dynamic_array[i].movie_selected, dynamic_array[i].row, dynamic_array[i].col);
+            found = 1;
         }
     }
+    if (!found)
+    {
+        printf("   No details found\n");
+    }
 }
-void ReadCSVAndUpdateSeats(const char *filename, Theatre *theatre, char *moviename) {
+
+void ReadCSVAndUpdateSeats(const char *filename, Theatre *theatre, char *moviename)
+{
     FILE *file = fopen(filename, "r");
-    if (!file) {
+    if (!file)
+    {
         printf("Could not open file %s for reading.\n", filename);
         return;
     }
 
     char line[256];
-    while (fgets(line, sizeof(line), file)) {
-        char *token;
+    while (fgets(line, sizeof(line), file))
+    {
         char movie[50], row;
         int col;
-        token = strtok(line,",");
-        token = strtok(NULL,",");
-        token = strtok(NULL,",");
-        token = strtok(NULL, ",");
-        if (token) strcpy(movie, token);
-        token = strtok(NULL, ",");
-        if (token) row = token[0];
-        token = strtok(NULL, ",");
-        if (token) col = atoi(token);
-        if (strcmp(movie,moviename) == 0) {
+        sscanf(line, "%*[^,],%*[^,],%*[^,],%[^,],%c,%d", movie, &row, &col);
+        if (strcmp(movie, moviename) == 0 && row != '-' && col != 0)
+        {
             int row_index = row - 'A';
-            if (row_index >= 0 && row_index < 10 && col >= 1 && col <= 15) {
+            if (row_index >= 0 && row_index < 10 && col >= 1 && col <= 15)
+            {
                 strcpy(theatre->seats[row_index][col - 1], "[X]");
             }
         }
-
     }
     fclose(file);
 }
+
+void DisplaySeats(Theatre *theatre, char *movie_name)
+{
+    printf("   You have chosen the movie %s\n", movie_name);
+    printf("   Select a Seat!\n");
+
+    printf("\t\tRecliner $500\n");
+    for (int i = 9; i > 8; i--)
+    {
+        printf("\033[38;5;250m\t\t%c ", 'A' + i);
+        printf("\033[0m");
+        for (int j = 0; j < 15; j++)
+        {
+            if (strcmp(theatre->seats[i][j], "[ ]") == 0)
+                printf("\033[1;32m");
+            else
+                printf("\033[1;31m");
+            printf("%s ", theatre->seats[i][j]);
+        }
+        printf("\033[0m\n");
+    }
+
+    printf("\t\tPrime $300\n");
+    for (int i = 8; i > 5; i--)
+    {
+        printf("\033[38;5;250m\t\t%c ", 'A' + i);
+        printf("\033[0m");
+        for (int j = 0; j < 15; j++)
+        {
+            if (strcmp(theatre->seats[i][j], "[ ]") == 0)
+                printf("\033[1;32m");
+            else
+                printf("\033[1;31m");
+            printf("%s ", theatre->seats[i][j]);
+        }
+        printf("\033[0m\n");
+    }
+
+    printf("\t\tNormal $200\n");
+    for (int i = 5; i >= 0; i--)
+    {
+        printf("\033[38;5;250m\t\t%c ", 'A' + i);
+        printf("\033[0m");
+        for (int j = 0; j < 15; j++)
+        {
+            if (strcmp(theatre->seats[i][j], "[ ]") == 0)
+                printf("\033[1;32m");
+            else
+                printf("\033[1;31m");
+            printf("%s ", theatre->seats[i][j]);
+        }
+        printf("\033[0m\n");
+    }
+
+    printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
+}
+
+void BookSeat(Theatre *theatre, char *booked_seat, Details *user)
+{
+    char row;
+    int num;
+
+    printf("   >>> Enter the row you would like: ");
+    scanf(" %c", &row);
+    printf("   >>> Enter the seat number you would like (1-15): ");
+    scanf("%d", &num);
+
+    int row_index = row - 'A';
+
+    if (strcmp(theatre->seats[row_index][num - 1], booked_seat) == 0)
+    {
+        printf("   Sorry, the seat %c%d is already booked.\n", row, num);
+    }
+    else
+    {
+        strcpy(theatre->seats[row_index][num - 1], booked_seat);
+        printf("   Seat %c%d successfully booked!\n", row, num);
+        user->row = row;
+        user->col = num;
+
+        // Update CSV with movie and seat details
+        FILE *file = fopen("data.csv", "a");
+        if (file)
+        {
+            fprintf(file, "%s,%s,%s,%s,%c,%d\n", user->name, user->email, user->mobile, user->movie_selected, user->row, user->col);
+            fclose(file);
+        }
+    }
+}
+
 void Book()
 {
     printf("   >>> Enter your first or last name: ");
     char search[50];
     scanf("%s", search);
+
     for (int i = 0; i < count; i++)
     {
         if (strstr(dynamic_array[i].name, search) != NULL)
         {
-            printf("   Which Movie would you like to watch:\n");
-            printf("   \t(1) Dune 2\n");
-            printf("   \t(2) Transformers One\n");
-            printf("   \t(3) Oppenheimer\n");
-            printf("   \t(4) Inception\n");
-            printf("   \t(5) Tenet\n");
-            printf("   >>>");
-            int n;
-            scanf("%d", &n);
-            char movie_chosen[50];
-            int movie_num;
-            switch(n)
+            printf("   Which Movie would you like to book?\n");
+            printf("   (1) %s\n", one.movie_name);
+            printf("   (2) %s\n", two.movie_name);
+            printf("   (3) %s\n", three.movie_name);
+            printf("   (4) %s\n", four.movie_name);
+            printf("   (5) %s\n", five.movie_name);
+
+            int option;
+            scanf("%d", &option);
+
+            Theatre *theatre = NULL;
+            char *selected_movie = NULL;
+
+            switch (option)
             {
-                case 1:
-                    strcpy(movie_chosen,"Dune 2");
-                    movie_num = 1;
-                    break;
-                case 2:
-                    strcpy(movie_chosen,"Transformers One");
-                    movie_num = 2;
-                    break;
-                case 3:
-                    strcpy(movie_chosen,"Oppenheimer");
-                    movie_num = 3;
-                    break;
-                case 4:
-                    strcpy(movie_chosen,"Inception");
-                    movie_num = 4;
-                    break;
-                case 5:
-                    strcpy(movie_chosen,"Tenet");
-                    movie_num = 5;
-                    break;
-                default:
-                    printf("Invalid");
-                    break;
+            case 1:
+                theatre = &one;
+                selected_movie = one.movie_name;
+                break;
+            case 2:
+                theatre = &two;
+                selected_movie = two.movie_name;
+                break;
+            case 3:
+                theatre = &three;
+                selected_movie = three.movie_name;
+                break;
+            case 4:
+                theatre = &four;
+                selected_movie = four.movie_name;
+                break;
+            case 5:
+                theatre = &five;
+                selected_movie = five.movie_name;
+                break;
+            default:
+                printf("   Invalid option.\n");
+                return;
             }
-            switch (movie_num){
-                case 1:
-                    ReadCSVAndUpdateSeats("data.csv",&one,movie_chosen);
-                    break;
-                case 2:
-                    ReadCSVAndUpdateSeats("data.csv",&two,movie_chosen);
-                    break;
-                case 3:
-                    ReadCSVAndUpdateSeats("data.csv",&three,movie_chosen);
-                    break;
-                case 4:
-                    ReadCSVAndUpdateSeats("data.csv",&four,movie_chosen);
-                    break;
-                case 5:
-                    ReadCSVAndUpdateSeats("data.csv",&five,movie_chosen);
-                    break;
-                default:
-                    break;
-            }
-            char s;
-            char *empty_seat = "[ ]";
-            char *booked_seat = "[X]";
-            if (n == 1)
-                {
-                    strcpy(dynamic_array[i].movie_selected, "Dune 2");
-                    printf("   You have chosen the movie Dune 2\n");
-                    printf("   Select a Seat!\n");
 
-                    printf("\t\tRecliner $500\n");
-                    for (int i = 9; i > 8; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(one.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", one.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tPrime $300\n");
-                    for (int i = 8; i > 5; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(one.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", one.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tNomral $200\n");
-                    for (int i = 5; i >= 0; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(one.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", one.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
-                    printf("   >>> Enter the row you would like: ");
-                    scanf(" %c", &s);
-                    printf("   >>> Enter the seat number you would like (1-15)");
-                    int num;
-                    scanf("%d", &num);
-
-                    int temp = s - 'A';
-                    strcpy(one.seats[temp][num - 1], booked_seat);
-
-                    dynamic_array[i].row = malloc(sizeof(char));
-                    *(dynamic_array[i].row) = s;
-                    dynamic_array[i].col = num;
-                }
-            if (n == 2)
-                {
-                    strcpy(dynamic_array[i].movie_selected, "Transformers One");
-                    printf("   You have chosen the movie Transformers One\n");
-                    printf("   Select a Seat!\n");
-
-                    printf("\t\tRecliner $500\n");
-                    for (int i = 9; i > 8; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(two.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", two.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tPrime $300\n");
-                    for (int i = 8; i > 5; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(two.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", two.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tNomral $200\n");
-                    for (int i = 5; i >= 0; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(two.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", two.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
-
-                    printf("   >>> Enter the row you would like: ");
-                    scanf(" %c", &s);
-                    printf("   >>> Enter the seat number you would like (1-15)");
-                    int num;
-                    scanf("%d", &num);
-
-                    int temp = s - 'A';
-                    strcpy(two.seats[temp][num - 1], booked_seat);
-
-                    dynamic_array[i].row = malloc(sizeof(char));
-                    *(dynamic_array[i].row) = s;
-                    dynamic_array[i].col = num;
-                }
-            if (n == 3)
-                {
-                    strcpy(dynamic_array[i].movie_selected, "Oppenheimer");
-                    printf("   You have chosen the movie Oppenheimer\n");
-                    printf("   Select a Seat!\n");
-
-                    printf("\t\tRecliner $500\n");
-                    for (int i = 9; i > 8; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(three.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", three.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tPrime $300\n");
-                    for (int i = 8; i > 5; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(three.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", three.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tNomral $200\n");
-                    for (int i = 5; i >= 0; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(three.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", three.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
-
-                    printf("   >>> Enter the row you would like: ");
-                    scanf(" %c", &s);
-                    printf("   >>> Enter the seat number you would like (1-15)");
-                    int num;
-                    scanf("%d", &num);
-
-                    int temp = s - 'A';
-                    strcpy(three.seats[temp][num - 1], booked_seat);
-
-                    dynamic_array[i].row = malloc(sizeof(char));
-                    *(dynamic_array[i].row) = s;
-                    dynamic_array[i].col = num;
-                }
-            if (n == 4)
-                {
-                    strcpy(dynamic_array[i].movie_selected, "Inception");
-                    printf("   You have chosen the movie Inception\n");
-                    printf("   Select a Seat!\n");
-
-                    printf("\t\tRecliner $500\n");
-                    for (int i = 9; i > 8; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(four.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", four.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tPrime $300\n");
-                    for (int i = 8; i > 5; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(four.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", four.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tNomral $200\n");
-                    for (int i = 5; i >= 0; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(four.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", four.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
-
-                    printf("   >>> Enter the row you would like: ");
-                    scanf(" %c", &s);
-                    printf("   >>> Enter the seat number you would like (1-15)");
-                    int num;
-                    scanf("%d", &num);
-
-                    int temp = s - 'A';
-                    strcpy(four.seats[temp][num - 1], booked_seat);
-
-                    dynamic_array[i].row = malloc(sizeof(char));
-                    *(dynamic_array[i].row) = s;
-                    dynamic_array[i].col = num;
-                }
-            if (n == 5)
-                {
-                    strcpy(dynamic_array[i].movie_selected, "Tenet");
-                    printf("   You have chosen the movie Tenet\n");
-                    printf("   Select a Seat!\n");
-
-                    printf("\t\tRecliner $500\n");
-                    for (int i = 9; i > 8; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(five.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", five.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tPrime $300\n");
-                    for (int i = 8; i > 5; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(five.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", five.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\tNomral $200\n");
-                    for (int i = 5; i >= 0; i--)
-                    {
-                        printf("\033[38;5;250m");
-                        printf("\t\t%c ",'A'+i);
-                        printf("\033[0m");
-                        for (int j = 0; j < 15; j++)
-                        {
-                            if (strcmp(five.seats[i][j], empty_seat) == 0)
-                                printf("\033[1;32m");
-                            else
-                                printf("\033[1;31m");
-                            printf("%s ", five.seats[i][j]);
-                        }
-                        printf("\033[0m");
-                        printf("\n");
-                    }
-                    printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
-
-                    printf("   >>> Enter the row you would like: ");
-                    scanf(" %c", &s);
-                    printf("   >>> Enter the seat number you would like (1-15)");
-                    int num;
-                    scanf("%d", &num);
-
-                    int temp = s - 'A';
-                    strcpy(five.seats[temp][num - 1], booked_seat);
-
-                    dynamic_array[i].row = malloc(sizeof(char));
-                    *(dynamic_array[i].row) = s;
-                    dynamic_array[i].col = num;
-                }
+            strcpy(dynamic_array[i].movie_selected, selected_movie);
+            ReadCSVAndUpdateSeats("data.csv", theatre, selected_movie);
+            DisplaySeats(theatre, selected_movie);
+            BookSeat(theatre, "[X]", &dynamic_array[i]);
         }
     }
 }
@@ -546,97 +280,92 @@ void GenerateBill()
     printf("   >>> Enter first or last name: ");
     char search[50];
     scanf("%s", search);
+    int found = 0;
     printf("\033[0;31m");
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         if (strstr(dynamic_array[i].name, search) != NULL)
         {
+            found = 1;
             printf("\n\n\t\t   *************************************\n");
             printf("\t\t     * Name : %s\n", dynamic_array[i].name);
             printf("\t\t     * Email id : %s\n", dynamic_array[i].email);
             printf("\t\t     * Mobile No : %s\n", dynamic_array[i].mobile);
+
             time_t currentTime;
             struct tm *localTime;
             currentTime = time(NULL);
             localTime = localtime(&currentTime);
-            printf("\t\t     * %s", asctime(localTime));
+            printf("\t\t     * %s", asctime(localTime)); 
+
             printf("\t\t     * Movie Selected: %s\n", dynamic_array[i].movie_selected);
-            printf("\t\t     * Seat : %c-%d\n", *(dynamic_array[i].row), dynamic_array[i].col);
-            if ('A'<=*(dynamic_array[i].row) && *(dynamic_array[i].row)<='F')
+            printf("\t\t     * Seat : %c-%d\n", dynamic_array[i].row, dynamic_array[i].col);
+
+            if ('A' <= dynamic_array[i].row && dynamic_array[i].row <= 'F')
                 printf("\t\t     * Price = $200\n");
-            else if('G'<=*(dynamic_array[i].row) && *(dynamic_array[i].row)<='I')
+            else if ('G' <= dynamic_array[i].row && dynamic_array[i].row <= 'I')
                 printf("\t\t     * Price = $300\n");
-            else if (*(dynamic_array[i].row) == 'J')
+            else if (dynamic_array[i].row == 'J')
                 printf("\t\t     * Price = $500\n");
+
             printf("\t\t   *************************************\n\n");
         }
+    }
+    if (!found)
+    {
+        printf("\t\t   No matching customer found.\n");
     }
     printf("\033[0m");
 }
 
 int main()
 {
-    one.movie_name = malloc(strlen("Dune 2") + 1);
-    strcpy(one.movie_name, "Dune 2");
-    two.movie_name = malloc(strlen("Transformers One") + 1);
-    strcpy(two.movie_name, "Transformers One");
-    three.movie_name = malloc(strlen("Oppenheimer") + 1);
-    strcpy(three.movie_name, "Oppenheimer");
-    four.movie_name = malloc(strlen("Inception") + 1);
-    strcpy(four.movie_name, "Inception");
-    five.movie_name = malloc(strlen("Tenet") + 1);
-    strcpy(five.movie_name, "Tenet");
-
-    char *empty_seat = "[ ]";
-    char *booked_seat = "[X]";
+    one.movie_name = "Dune 2";
+    two.movie_name = "Transformers One";
+    three.movie_name = "Oppenheimer";
+    four.movie_name = "Inception";
+    five.movie_name = "Tenet";
 
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 15; j++)
         {
-            strcpy(one.seats[i][j], empty_seat);
-            strcpy(two.seats[i][j], empty_seat);
-            strcpy(three.seats[i][j], empty_seat);
-            strcpy(four.seats[i][j], empty_seat);
-            strcpy(five.seats[i][j], empty_seat);
+            strcpy(one.seats[i][j], "[ ]");
+            strcpy(two.seats[i][j], "[ ]");
+            strcpy(three.seats[i][j], "[ ]");
+            strcpy(four.seats[i][j], "[ ]");
+            strcpy(five.seats[i][j], "[ ]");
         }
     }
 
-    dynamic_array = malloc(sizeof(Details));
-       if (dynamic_array == NULL)
-       {
-           printf("Memory allocation failed!\n");
-       }
+    int choice = 0;
+    while (choice != 5)
+    {
+        PrintMenu();
+        scanf("%d", &choice);
+        switch (choice)
+        {
+        case 1:
+            InputDetails();
+            break;
+        case 2:
+            ShowDetails();
+            break;
+        case 3:
+            Book();
+            break;
+        case 4:
+            GenerateBill();
+            break;
+        case 5:
+            printf("Bye!\n");
+            break;
+        default:
+            printf("Invalid choice, please select again.\n");
+            break;
+        }
+    }
 
-       int flag = 0;
-       while (flag != 1)
-       {
-           PrintMenu();
-           int n;
-           scanf("%d", &n);
-           switch (n)
-           {
-           case 1:
-               InputDetails();
-               break;
-           case 2:
-               ShowDetails();
-               break;
-           case 3:
-               Book();
-               break;
-           case 4:
-               GenerateBill();
-               break;
-           case 5:
-               flag = 1;
-               break;
-           default:
-               printf("Invalid entry!!!\n");
-               break;
-           }
-       }
-
-       free(dynamic_array);
-       return 0;
-
+    free(dynamic_array);
+    return 0;
 }
