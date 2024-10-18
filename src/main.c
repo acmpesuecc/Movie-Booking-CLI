@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "sqlite3.h"
+#include <windows.h>
 
-#define MAX_PATH 260
 typedef struct {
     char name[50];
     char email[50];
