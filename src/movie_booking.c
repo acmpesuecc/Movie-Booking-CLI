@@ -4,10 +4,10 @@
 
 Theatre *list = NULL;
 
-Details *dynamic_array = NULL;
-int count = 0;
+//Details *dynamic_array = NULL;
+//int count = 0;
 
-Theatre one, two, three, four, five;
+//Theatre one, two, three, four, five;
 
 void Book()
 {

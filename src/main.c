@@ -5,7 +5,7 @@
 // Global variables for theatres and dynamic array
 Theatre one, two, three, four, five;
 Details *dynamic_array = NULL;
-
+int count=0;
 int main() {
     // Dynamically allocate memory for movie names
     one.movie_name = malloc(strlen("Dune 2") + 1);

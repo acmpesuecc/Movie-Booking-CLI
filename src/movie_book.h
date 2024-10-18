@@ -33,7 +33,7 @@ typedef struct {
 //     int seat_col;
 // } Details;
 
-//int count = 0;
+extern int count;
 
 extern Theatre one, two, three, four, five;
 extern Details *dynamic_array;

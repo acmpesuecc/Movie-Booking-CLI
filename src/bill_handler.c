@@ -1,4 +1,5 @@
 #include<stdio.h>
+#include <time.h>
 #include "bill_handler.h"
 #include "movie_book.h"
 
@@ -6,11 +7,11 @@
 //     char name[50];
 //     char email[50];
 //     char mobile[10];
-//     char movie_selected[50];
+//     char movie_selected[50]; 
 // } Details;
 
-Details *dynamic_array = NULL;
-int count = 0;
+//Details *dynamic_array = NULL;
+//int count = 0;
 
 
 void GenerateBill()

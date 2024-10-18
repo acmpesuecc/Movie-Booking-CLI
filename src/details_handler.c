@@ -3,20 +3,20 @@
 #include "details_handler.h"
 #include "movie_book.h"
 
-typedef struct {
-    char name[50];
-    char email[50];
-    char mobile[10];
-    char movie_selected[50];
-} Details;
+// typedef struct {
+//     char name[50];
+//     char email[50];
+//     char mobile[10];
+//     char movie_selected[50];
+// } Details;
 /*
 // Global dynamic array to store user details
 
 int count = 0;
 */
-Details *dynamic_array = NULL;
+//Details *dynamic_array = NULL;
 // Function to enter user details
-int count=0;
+
 void InputDetails() {
     dynamic_array = realloc(dynamic_array, (count + 1) * sizeof(Details));
     if (!dynamic_array) {

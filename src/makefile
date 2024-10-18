@@ -8,7 +8,8 @@ CFLAGS = -Wall -g  # -Wall enables all compiler warnings, -g adds debugging symb
 TARGET = movie_booking
 
 # List of object files needed to build the target
-OBJS = main.o functions.o file_operations.o
+OBJS = main.o data_handler.o details_handler.o bill_handler.o menu_handler.o movie_booking.o
+
 
 # Default target to build the program
 all: $(TARGET)
@@ -23,7 +24,7 @@ main.o: main.c movie_book.h
 
 # Rule to compile functions.c into functions.o
 details_handler.o: details_handler.c movie_book.h
-	$(CC) $(CFLAGS) -c functions.c
+	$(CC) $(CFLAGS) -c details_handler.c
 
 data_handler.o: data_handler.c movie_book.h
 	$(CC) $(CFLAGS) -c data_handler.c
