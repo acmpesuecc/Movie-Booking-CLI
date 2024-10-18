@@ -47,6 +47,11 @@ void PrintMenu()
 
 void InputDetails()
 {
+    FILE *fp;
+    fp = fopen("data.csv", "w");
+    if (fp == NULL) {
+        printf("Error: Could not open file\n");
+        }
     Details *temp = realloc(dynamic_array, (count + 1) * sizeof(Details));
     if (temp == NULL)
     {
@@ -64,8 +69,9 @@ void InputDetails()
     printf("   >>> Enter mobile number: ");
     scanf("%s", dynamic_array[count].mobile);
     getchar();
-
+    fprintf(fp, "%s, %s, %s\n",dynamic_array[count].name,dynamic_array[count].email,dynamic_array[count].mobile);
     count++;
+    fclose(fp);
 }
 
 void ShowDetails()
@@ -112,6 +118,11 @@ void ReadCSVAndUpdateSeats(const char *filename, Theatre *theatre, char *moviena
 }
 void Book()
 {
+    FILE *fp;
+    fp = fopen("data.csv", "w");
+    if (fp == NULL) {
+        printf("Error: Could not open file\n");
+        }
     printf("   >>> Enter your first or last name: ");
     char search[50];
     scanf("%s", search);
@@ -175,6 +186,7 @@ void Book()
                 default:
                     break;
             }
+            
             char s;
             char *empty_seat = "[ ]";
             char *booked_seat = "[X]";
