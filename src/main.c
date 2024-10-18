@@ -57,7 +57,7 @@ void InputDetails()
     printf("   >>> Enter your name: ");
     scanf(" %[^\n]", dynamic_array[count].name);
     getchar();
-    printf("   >>> Enter your email address:");
+    printf("   >>> Enter your email address: ");
     scanf("%s", dynamic_array[count].email);
     getchar();
     printf("   >>> Enter mobile number: ");
@@ -561,40 +561,67 @@ void Book()
     }
 }
 
-void GenerateBill()
-{
+void GenerateBill() {
+    printf("\033[1;34m");  // Set blue text color
+    printf("   +==================================================================+\n");
+    printf("   |                       🌟  BILL GENERATION  🌟                      |\n");
+    printf("   +==================================================================+\n");
+    printf("\033[0;32m");  // Set green text color
     printf("   >>> Enter first or last name: ");
+    
     char search[50];
     scanf("%s", search);
-    printf("\033[0;31m");
+    
+    printf("\033[0;31m");  // Set red text color
+    int found = 0;  // Flag to check if any movie was found
     for (int i = 0; i < count; i++) {
-        if (strstr(dynamic_array[i].name, search) != NULL)
-        {
-            printf("\n\n\t\t   *************************************\n");
-            printf("\t\t     * Name : %s\n", dynamic_array[i].name);
-            printf("\t\t     * Email id : %s\n", dynamic_array[i].email);
-            printf("\t\t     * Mobile No : %s\n", dynamic_array[i].mobile);
-            time_t currentTime;
-            struct tm *localTime;
-            currentTime = time(NULL);
-            localTime = localtime(&currentTime);
-            printf("\t\t     * %s", asctime(localTime));
-            printf("\t\t     * Movie Selected: %s\n", dynamic_array[i].movie_selected);
-            printf("\t\t     * Seat : %c-%d\n", *(dynamic_array[i].row), dynamic_array[i].col);
-            if ('A'<=*(dynamic_array[i].row) && *(dynamic_array[i].row)<='F')
-                printf("\t\t     * Price = $200\n");
-            else if('G'<=*(dynamic_array[i].row) && *(dynamic_array[i].row)<='I')
-                printf("\t\t     * Price = $300\n");
-            else if (*(dynamic_array[i].row) == 'J')
-                printf("\t\t     * Price = $500\n");
-            printf("\t\t   *************************************\n\n");
+        if (strstr(dynamic_array[i].name, search) != NULL) {
+            found = 1;  // Set flag if a match is found
+            if (dynamic_array[i].movie_selected[0] == '\0') {  // Check if no movie is selected
+                printf("\t\t     No movie selected for %s.\n", dynamic_array[i].name);
+            } else {
+                printf("\n\n\t\t   *************************************\n");
+                printf("\t\t     * Name : %s\n", dynamic_array[i].name);
+                printf("\t\t     * Email id : %s\n", dynamic_array[i].email);
+                printf("\t\t     * Mobile No : %s\n", dynamic_array[i].mobile);
+                
+                time_t currentTime;
+                struct tm *localTime;
+                currentTime = time(NULL);
+                localTime = localtime(&currentTime);
+                printf("\t\t     * Date & Time: %s", asctime(localTime));
+                
+                printf("\t\t     * Movie Selected: %s\n", dynamic_array[i].movie_selected);
+                printf("\t\t     * Seat : %c-%d\n", *(dynamic_array[i].row), dynamic_array[i].col);
+                
+                if ('A' <= *(dynamic_array[i].row) && *(dynamic_array[i].row) <= 'F')
+                    printf("\t\t     * Price = $200\n");
+                else if ('G' <= *(dynamic_array[i].row) && *(dynamic_array[i].row) <= 'I')
+                    printf("\t\t     * Price = $300\n");
+                else if (*(dynamic_array[i].row) == 'J')
+                    printf("\t\t     * Price = $500\n");
+                
+                printf("\t\t   *************************************\n\n");
+            }
         }
     }
-    printf("\033[0m");
+    
+    if (!found) {
+        printf("\t\t     No records found for the name: %s.\n", search);
+    }
+    
+    printf("\033[0m");  // Reset text color
 }
 
-int main()
-{
+int main() {
+    // Allocate dynamic memory for details array
+    dynamic_array = malloc(sizeof(Details) * 100); // Assuming a maximum of 100 entries
+    if (dynamic_array == NULL) {
+        fprintf(stderr, "Memory allocation failed for dynamic_array!\n");
+        return 1;
+    }
+
+    // Initialize the theatres
     one.movie_name = malloc(strlen("Dune 2") + 1);
     strcpy(one.movie_name, "Dune 2");
     two.movie_name = malloc(strlen("Transformers One") + 1);
@@ -609,10 +636,8 @@ int main()
     char *empty_seat = "[ ]";
     char *booked_seat = "[X]";
 
-    for (int i = 0; i < 10; i++)
-    {
-        for (int j = 0; j < 15; j++)
-        {
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 15; j++) {
             strcpy(one.seats[i][j], empty_seat);
             strcpy(two.seats[i][j], empty_seat);
             strcpy(three.seats[i][j], empty_seat);
@@ -621,42 +646,43 @@ int main()
         }
     }
 
-    dynamic_array = malloc(sizeof(Details));
-       if (dynamic_array == NULL)
-       {
-           printf("Memory allocation failed!\n");
-       }
+    int flag = 0;
+    while (flag != 1) {
+        PrintMenu();
+        int n;
+        scanf("%d", &n);
+        switch (n) {
+            case 1:
+                InputDetails();
+                break;
+            case 2:
+                ShowDetails();
+                break;
+            case 3:
+                Book();
+                break;
+            case 4:
+                GenerateBill();
+                break;
+            case 5:
+                flag = 1; // Exit the loop
+                break;
+            default:
+                printf("Invalid entry!!!\n");
+                break;
+        }
+    }
 
-       int flag = 0;
-       while (flag != 1)
-       {
-           PrintMenu();
-           int n;
-           scanf("%d", &n);
-           switch (n)
-           {
-           case 1:
-               InputDetails();
-               break;
-           case 2:
-               ShowDetails();
-               break;
-           case 3:
-               Book();
-               break;
-           case 4:
-               GenerateBill();
-               break;
-           case 5:
-               flag = 1;
-               break;
-           default:
-               printf("Invalid entry!!!\n");
-               break;
-           }
-       }
+    // Thank you message before exit
+    printf("\nThank you for using the booking system! Have a great day!\n");
 
-       free(dynamic_array);
-       return 0;
+    // Free allocated resources
+    free(one.movie_name);
+    free(two.movie_name);
+    free(three.movie_name);
+    free(four.movie_name);
+    free(five.movie_name);
+    free(dynamic_array); // Free the dynamic array for details
 
+    return 0;
 }
