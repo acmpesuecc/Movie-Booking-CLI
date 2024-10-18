@@ -2,12 +2,12 @@
 #include "bill_handler.h"
 #include "movie_book.h"
 
-typedef struct {
-    char name[50];
-    char email[50];
-    char mobile[10];
-    char movie_selected[50];
-} Details;
+// typedef struct {
+//     char name[50];
+//     char email[50];
+//     char mobile[10];
+//     char movie_selected[50];
+// } Details;
 
 Details *dynamic_array = NULL;
 int count = 0;
