@@ -25,24 +25,23 @@ int count = 0;
 Theatre one, two, three, four, five;
 
 
-void PrintMenu()
-{
-    printf("\033[1;36m");
-    printf("   ╔════════════════════════════════════════════════════════════╗\n");
-    printf("   ║                                                            ║\n");
-    printf("   ║                         BOOK YOUR SHOW                     ║\n");
-    printf("   ║                                                            ║\n");
-    printf("   ║  Please select an option from below:                       ║\n");
-    printf("   ║                                                            ║\n");
-    printf("   ║    (1) Enter Details                                       ║\n");
-    printf("   ║    (2) Show Details                                        ║\n");
-    printf("   ║    (3) Book Movies                                         ║\n");
-    printf("   ║    (4) Generate Bill                                       ║\n");
-    printf("   ║    (5) Exit                                                ║\n");
-    printf("   ║                                                            ║\n");
-    printf("   ╚════════════════════════════════════════════════════════════╝\n");
+void PrintMenu() {
+    printf("\033[1;36m");  // Set cyan text color
+    printf("   +==================================================================+\n");
+    printf("   |                                                                  |\n");
+    printf("   |                          BOOK YOUR SHOW                          |\n");
+    printf("   |                                                                  |\n");
+    printf("   |         Please select an option from the menu below:             |\n");
+    printf("   |                                                                  |\n");
+    printf("   |            (1) Enter Details                                     |\n");
+    printf("   |            (2) Show Details                                      |\n");
+    printf("   |            (3) Book Movies                                       |\n");
+    printf("   |            (4) Generate Bill                                     |\n");
+    printf("   |            (5) Exit                                              |\n");
+    printf("   |                                                                  |\n");
+    printf("   +==================================================================+\n");
     printf("   > ");
-    printf("\033[0m");
+    printf("\033[0m");  // Reset text color
 }
 
 void InputDetails()
@@ -68,17 +67,38 @@ void InputDetails()
     count++;
 }
 
-void ShowDetails()
-{
+void ShowDetails() {
+    printf("\033[1;36m");  // Set cyan text for better UI
+    printf("   +==================================================================+\n");
+    printf("   |                           SEARCH DETAILS                        |\n");
+    printf("   +==================================================================+\n");
     printf("   >>> Enter first or last name: ");
     char search[50];
     scanf("%s", search);
+
+    int found = 0;  // To track if any records are found
     for (int i = 0; i < count; i++) {
         if (strstr(dynamic_array[i].name, search) != NULL) {
-            printf("   Name: %s\n   Mobile: %s\n   Email: %s\n", dynamic_array[i].name, dynamic_array[i].mobile, dynamic_array[i].email);
+            printf("\033[1;32m");  // Set green text for details
+            printf("   +------------------------------------------------------------------+\n");
+            printf("   |   Name    : %-50s |\n", dynamic_array[i].name);
+            printf("   |   Mobile  : %-50s |\n", dynamic_array[i].mobile);
+            printf("   |   Email   : %-50s |\n", dynamic_array[i].email);
+            printf("   +------------------------------------------------------------------+\n");
+            found = 1;
         }
     }
+
+    if (!found) {
+        printf("\033[1;31m");  // Set red text for error message
+        printf("   +------------------------------------------------------------------+\n");
+        printf("   |                     No matching records found!                   |\n");
+        printf("   +------------------------------------------------------------------+\n");
+    }
+    
+    printf("\033[0m");  // Reset color to default
 }
+
 void ReadCSVAndUpdateSeats(const char *filename, Theatre *theatre, char *moviename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -238,7 +258,7 @@ void Book()
                     printf("\t\t   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15\n\n");
                     printf("   >>> Enter the row you would like: ");
                     scanf(" %c", &s);
-                    printf("   >>> Enter the seat number you would like (1-15)");
+                    printf("   >>> Enter the seat number you would like (1-15): ");
                     int num;
                     scanf("%d", &num);
 
