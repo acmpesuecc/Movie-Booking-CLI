@@ -45,8 +45,20 @@ void PrintMenu()
     printf("\033[0m");
 }
 
+int isValidNumber(char n[])
+{
+    for(int i = 0; i< 10; i++)
+    {
+        if(char n[i]-'0' != 48 && char n[i]-'0' != 57)
+        {
+            return 0;
+            break;
+        }
+    }
+}
 void InputDetails()
 {
+    printf("\n=========== User Information Entry ===========\n");
     Details *temp = realloc(dynamic_array, (count + 1) * sizeof(Details));
     if (temp == NULL)
     {
@@ -55,21 +67,25 @@ void InputDetails()
     }
     dynamic_array = temp;
 
-    printf("   >>> Enter your name: ");
+    printf("   >>> Enter your first and last name: ");
     scanf(" %[^\n]", dynamic_array[count].name);
     getchar();
     printf("   >>> Enter your email address:");
     scanf("%s", dynamic_array[count].email);
     getchar();
-    printf("   >>> Enter mobile number: ");
-    scanf("%s", dynamic_array[count].mobile);
-    getchar();
-
+    do
+    {
+        printf("   >>> Enter mobile number: ");
+        scanf("%s", dynamic_array[count].mobile);
+        getchar();
+    }
+    while(strlen(dynamic_array[count].mobile) != 10 && !isValidNumber(dynamic_array[count].mobile) );
     count++;
 }
 
 void ShowDetails()
 {
+    printf("\n=========== User Information ===========\n");
     printf("   >>> Enter first or last name: ");
     char search[50];
     scanf("%s", search);
