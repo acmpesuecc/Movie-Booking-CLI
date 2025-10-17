@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 typedef struct {
     char name[50];
@@ -39,6 +40,7 @@ void PrintMenu()
     printf("   ║    (3) Book Movies                                         ║\n");
     printf("   ║    (4) Generate Bill                                       ║\n");
     printf("   ║    (5) Exit                                                ║\n");
+    printf("   ║    (6) Reset bookings to default                           ║\n");
     printf("   ║                                                            ║\n");
     printf("   ╚════════════════════════════════════════════════════════════╝\n");
     printf("   > ");
@@ -82,33 +84,111 @@ void ShowDetails()
 void ReadCSVAndUpdateSeats(const char *filename, Theatre *theatre, char *moviename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
-        printf("Could not open file %s for reading.\n", filename);
-        return;
+        // try relative to src/ if not found
+        char altpath[512];
+        snprintf(altpath, sizeof(altpath), "src/%s", filename);
+        file = fopen(altpath, "r");
+        if (!file) {
+            printf("Could not open file %s for reading.\n", filename);
+            return;
+        }
     }
-
-    char line[256];
+    char line[512];
     while (fgets(line, sizeof(line), file)) {
-        char *token;
-        char movie[50], row;
-        int col;
-        token = strtok(line,",");
-        token = strtok(NULL,",");
-        token = strtok(NULL,",");
-        token = strtok(NULL, ",");
-        if (token) strcpy(movie, token);
-        token = strtok(NULL, ",");
-        if (token) row = token[0];
-        token = strtok(NULL, ",");
-        if (token) col = atoi(token);
-        if (strcmp(movie,moviename) == 0) {
+        // simple CSV split by commas, tolerant of extra spaces
+        char *tokens[8];
+        int t = 0;
+        char *p = line;
+        // tokenize
+        while (t < 8 && p) {
+            char *q = strchr(p, ',');
+            if (q) {
+                *q = '\0';
+                tokens[t++] = p;
+                p = q + 1;
+            } else {
+                // last token (may contain newline)
+                char *nl = strchr(p, '\n');
+                if (nl) *nl = '\0';
+                tokens[t++] = p;
+                break;
+            }
+        }
+
+        // need at least 6 tokens: name,email,mobile,movie,row,col
+        if (t < 6) continue;
+
+        // trim leading spaces for movie, row, col
+        char *movie_token = tokens[3];
+        while (*movie_token == ' ' || *movie_token == '\t') movie_token++;
+        char *row_token = tokens[4];
+        while (*row_token == ' ' || *row_token == '\t') row_token++;
+        char *col_token = tokens[5];
+        while (*col_token == ' ' || *col_token == '\t') col_token++;
+
+        // compare movie names
+        if (strcmp(movie_token, moviename) == 0) {
+            char row = row_token[0];
+            int col = atoi(col_token);
             int row_index = row - 'A';
             if (row_index >= 0 && row_index < 10 && col >= 1 && col <= 15) {
                 strcpy(theatre->seats[row_index][col - 1], "[X]");
             }
         }
-
     }
     fclose(file);
+}
+
+// append a booking to csv safely (flush + fsync)
+void AppendBookingToCSV(const char *filename, Details *d)
+{
+    FILE *file = fopen(filename, "a");
+    if (!file) {
+        // try src/ prefix
+        char alt[512];
+        snprintf(alt, sizeof(alt), "src/%s", filename);
+        file = fopen(alt, "a");
+        if (!file) {
+            printf("Could not open %s for appending. Booking not persisted.\n", filename);
+            return;
+        }
+    }
+
+    // format: name,email,mobile,movie,row,col
+    char rowch = (d->row ? *(d->row) : '?');
+    fprintf(file, "%s,%s,%s,%s,%c,%d\n", d->name, d->email, d->mobile, d->movie_selected, rowch, d->col);
+    fflush(file);
+    int fd = fileno(file);
+    if (fd >= 0) fsync(fd);
+    fclose(file);
+}
+
+// reset bookings by copying src/data_default.csv over src/data.csv
+void ResetBookingsToDefault()
+{
+    const char *srcfile = "src/data_default.csv";
+    const char *dstfile = "src/data.csv";
+    FILE *s = fopen(srcfile, "r");
+    if (!s) {
+        printf("Could not open default data file %s\n", srcfile);
+        return;
+    }
+    FILE *d = fopen(dstfile, "w");
+    if (!d) {
+        printf("Could not open destination data file %s for writing\n", dstfile);
+        fclose(s);
+        return;
+    }
+    char buf[1024];
+    while (fgets(buf, sizeof(buf), s)) {
+        fputs(buf, d);
+    }
+    fflush(d);
+    int fd = fileno(d);
+    if (fd >= 0) fsync(fd);
+    fclose(s);
+    fclose(d);
+    printf("Bookings reset to default state.\n");
 }
 void Book()
 {
@@ -129,7 +209,7 @@ void Book()
             int n;
             scanf("%d", &n);
             char movie_chosen[50];
-            int movie_num;
+            int movie_num = 0;
             switch(n)
             {
                 case 1:
@@ -158,19 +238,19 @@ void Book()
             }
             switch (movie_num){
                 case 1:
-                    ReadCSVAndUpdateSeats("data.csv",&one,movie_chosen);
+                    ReadCSVAndUpdateSeats("src/data.csv",&one,movie_chosen);
                     break;
                 case 2:
-                    ReadCSVAndUpdateSeats("data.csv",&two,movie_chosen);
+                    ReadCSVAndUpdateSeats("src/data.csv",&two,movie_chosen);
                     break;
                 case 3:
-                    ReadCSVAndUpdateSeats("data.csv",&three,movie_chosen);
+                    ReadCSVAndUpdateSeats("src/data.csv",&three,movie_chosen);
                     break;
                 case 4:
-                    ReadCSVAndUpdateSeats("data.csv",&four,movie_chosen);
+                    ReadCSVAndUpdateSeats("src/data.csv",&four,movie_chosen);
                     break;
                 case 5:
-                    ReadCSVAndUpdateSeats("data.csv",&five,movie_chosen);
+                    ReadCSVAndUpdateSeats("src/data.csv",&five,movie_chosen);
                     break;
                 default:
                     break;
@@ -178,7 +258,7 @@ void Book()
             char s;
             char *empty_seat = "[ ]";
             char *booked_seat = "[X]";
-            if (n == 1)
+                if (n == 1)
                 {
                     strcpy(dynamic_array[i].movie_selected, "Dune 2");
                     printf("   You have chosen the movie Dune 2\n");
@@ -248,6 +328,8 @@ void Book()
                     dynamic_array[i].row = malloc(sizeof(char));
                     *(dynamic_array[i].row) = s;
                     dynamic_array[i].col = num;
+                    // persist booking
+                    AppendBookingToCSV("src/data.csv", &dynamic_array[i]);
                 }
             if (n == 2)
                 {
@@ -320,6 +402,7 @@ void Book()
                     dynamic_array[i].row = malloc(sizeof(char));
                     *(dynamic_array[i].row) = s;
                     dynamic_array[i].col = num;
+                    AppendBookingToCSV("src/data.csv", &dynamic_array[i]);
                 }
             if (n == 3)
                 {
@@ -392,6 +475,7 @@ void Book()
                     dynamic_array[i].row = malloc(sizeof(char));
                     *(dynamic_array[i].row) = s;
                     dynamic_array[i].col = num;
+                    AppendBookingToCSV("src/data.csv", &dynamic_array[i]);
                 }
             if (n == 4)
                 {
@@ -464,6 +548,7 @@ void Book()
                     dynamic_array[i].row = malloc(sizeof(char));
                     *(dynamic_array[i].row) = s;
                     dynamic_array[i].col = num;
+                    AppendBookingToCSV("src/data.csv", &dynamic_array[i]);
                 }
             if (n == 5)
                 {
@@ -536,6 +621,7 @@ void Book()
                     dynamic_array[i].row = malloc(sizeof(char));
                     *(dynamic_array[i].row) = s;
                     dynamic_array[i].col = num;
+                    AppendBookingToCSV("src/data.csv", &dynamic_array[i]);
                 }
         }
     }
@@ -587,7 +673,6 @@ int main()
     strcpy(five.movie_name, "Tenet");
 
     char *empty_seat = "[ ]";
-    char *booked_seat = "[X]";
 
     for (int i = 0; i < 10; i++)
     {
@@ -629,6 +714,15 @@ int main()
                break;
            case 5:
                flag = 1;
+               break;
+           case 6:
+               ResetBookingsToDefault();
+               // after reset, also reinitialize seat maps from file
+               ReadCSVAndUpdateSeats("src/data.csv", &one, one.movie_name);
+               ReadCSVAndUpdateSeats("src/data.csv", &two, two.movie_name);
+               ReadCSVAndUpdateSeats("src/data.csv", &three, three.movie_name);
+               ReadCSVAndUpdateSeats("src/data.csv", &four, four.movie_name);
+               ReadCSVAndUpdateSeats("src/data.csv", &five, five.movie_name);
                break;
            default:
                printf("Invalid entry!!!\n");
