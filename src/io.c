@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "io.h"
 
 void read_csv_update(Theatre theatres[], int count) {
@@ -12,6 +13,7 @@ void read_csv_update(Theatre theatres[], int count) {
         char movie[50], row;
         int col;
         if (sscanf(line, "%*[^,],%*[^,],%*[^,],%49[^,],%c,%d", movie, &row, &col) == 3) {
+            row = toupper(row); 
             for (int k = 0; k < count; k++) {
                 if (strcmp(theatres[k].movie_name, movie) == 0) {
                     int i = row - 'A';

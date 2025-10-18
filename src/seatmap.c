@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+#include "io.h"
 #include "seatmap.h"
 
 void initialize_seats(Theatre *t) {
